@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>إضافة عميل - صائن</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, silver, orange);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .form-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      background-color: orange;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:hover {
+      background-color: darkorange;
+    }
+
+    #message {
+      margin-top: 15px;
+      color: #333;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h2>إضافة عميل جديد</h2>
+    <form id="clientForm">
+      <input type="text" name="name" placeholder="اسم العميل" required>
+      <input type="text" name="username" placeholder="اسم المستخدم" required>
+      <input type="password" name="password" placeholder="كلمة المرور" required>
+      <input type="text" name="car_type" placeholder="نوع السيارة">
+      <input type="text" name="plate_number" placeholder="رقم اللوحة">
+      <input type="text" name="phone" placeholder="رقم الهاتف">
+      <button type="submit">إضافة</button>
+    </form>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    const form = document.getElementById('clientForm');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch('/api/add-client', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          message.textContent = '✅ تم إضافة العميل بنجاح!';
+          message.style.color = 'green';
+          form.reset();
+        } else {
+          message.textContent = '❌ فشل في الإضافة: ' + result.message;
+          message.style.color = 'red';
+        }
+      } catch (error) {
+        message.textContent = '❌ حدث خطأ في الاتصال بالسيرفر';
+        message.style.color = 'red';
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>
