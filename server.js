@@ -43,8 +43,8 @@ app.post('/api/login', async (req, res) => {
 
     res.json({ success: true, message: 'تسجيل دخول ناجح', client: data });
   } catch (err) {
-    console.error('❌ خطأ تسجيل الدخول:', err.message);
-    res.status(500).json({ success: false, message: 'حدث خطأ بالسيرفر' });
+    console.error('❌ خطأ تسجيل الدخول:', err);
+    res.status(500).json({ success: false, message: 'حدث خطأ بالسيرفر', error: err });
   }
 });
 
@@ -59,17 +59,25 @@ app.post('/api/add-client', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('clients')
-      .insert([{ name, username, password, phone }]);
+      .insert([{ name, username, password, phone, car_type, plate_number }]);
 
     if (error) {
-      console.error('❌ فشل في الإضافة:', error.message);
-      return res.status(500).json({ success: false, message: 'فشل في إضافة العميل' });
+      console.error('❌ فشل في الإضافة:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'فشل في إضافة العميل',
+        error
+      });
     }
 
-    res.json({ success: true, message: 'تم إضافة العميل بنجاح', clientId: data[0].id });
+    res.json({
+      success: true,
+      message: 'تم إضافة العميل بنجاح',
+      clientId: data[0].id
+    });
   } catch (err) {
-    console.error('❌ خطأ:', err.message);
-    res.status(500).json({ success: false, message: 'خطأ بالسيرفر' });
+    console.error('❌ خطأ بالسيرفر:', err);
+    res.status(500).json({ success: false, message: 'خطأ بالسيرفر', error: err });
   }
 });
 
@@ -79,14 +87,14 @@ app.get('/api/clients', async (req, res) => {
     const { data, error } = await supabase.from('clients').select('*');
 
     if (error) {
-      console.error('❌ فشل في جلب الزبائن:', error.message);
-      return res.status(500).json({ success: false, message: 'فشل في جلب الزبائن' });
+      console.error('❌ فشل في جلب الزبائن:', error);
+      return res.status(500).json({ success: false, message: 'فشل في جلب الزبائن', error });
     }
 
     res.json({ success: true, clients: data });
   } catch (err) {
-    console.error('❌ خطأ:', err.message);
-    res.status(500).json({ success: false, message: 'خطأ بالسيرفر' });
+    console.error('❌ خطأ:', err);
+    res.status(500).json({ success: false, message: 'خطأ بالسيرفر', error: err });
   }
 });
 
