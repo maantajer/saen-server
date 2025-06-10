@@ -1,3 +1,4 @@
+<!-- ✅ client_add.html المعدل -->
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -15,7 +16,6 @@
       align-items: center;
       height: 100vh;
     }
-
     .form-container {
       background: #fff;
       padding: 30px;
@@ -25,47 +25,24 @@
       max-width: 400px;
       text-align: center;
     }
-
-    h2 {
-      margin-bottom: 20px;
-      color: #333;
-    }
-
+    h2 { margin-bottom: 20px; color: #333; }
     input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      width: 100%; padding: 10px; margin: 8px 0;
+      border: 1px solid #ccc; border-radius: 8px;
     }
-
     button {
-      background-color: orange;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
+      background-color: orange; color: white;
+      padding: 10px 20px; border: none;
+      border-radius: 8px; font-weight: bold; cursor: pointer;
       margin-top: 15px;
     }
-
-    button:hover {
-      background-color: darkorange;
-    }
-
+    button:hover { background-color: darkorange; }
     #message {
-      margin-top: 15px;
-      color: #333;
-      font-weight: bold;
+      margin-top: 15px; color: #333; font-weight: bold;
     }
-
     .back-button {
-      margin-top: 10px;
-      display: inline-block;
-      text-decoration: none;
-      color: orange;
-      font-weight: bold;
+      margin-top: 10px; display: inline-block;
+      text-decoration: none; color: orange; font-weight: bold;
     }
   </style>
 </head>
@@ -84,34 +61,24 @@
     <p id="message"></p>
     <a class="back-button" href="dashboard.html">⬅️ الرجوع إلى القائمة</a>
   </div>
-
   <script>
     const form = document.getElementById('clientForm');
     const message = document.getElementById('message');
-
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
-
       try {
-        const response = await fetch('/api/add-client', {
+        const response = await fetch('https://saen-server-1.onrender.com/api/add-client', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-
         const result = await response.json();
-
         if (result.success) {
           message.textContent = '✅ تم إضافة العميل بنجاح!';
           message.style.color = 'green';
-
-          // ✅ رجوع تلقائي بعد ثانيتين
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 2000);
+          setTimeout(() => window.location.href = "dashboard.html", 2000);
         } else {
           message.textContent = '❌ فشل في الإضافة: ' + result.message;
           message.style.color = 'red';
