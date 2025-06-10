@@ -9,7 +9,7 @@ const port = 4000;
 app.use(cors());
 app.use(express.json());
 
-//⭐️ هذا السطر يخلي السيرفر يعرض صفحات HTML من مجلد public
+/⭐️ هذا السطر يخلي السيرفر يعرض صفحات HTML من مجلد public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // تسجيل الدخول
@@ -71,6 +71,56 @@ app.get('/api/clients', (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, message: 'فشل في جلب الزبائن' });
+  }
+});
+
+// ✅ إضافة الأعطال من تطبيق الأندرويد
+app.post('/api/add-error', (req, res) => {
+  const { client_id, errors } = req.body;
+
+  if (!client_id || !Array.isArray(errors)) {
+    return res.status(400).json({ success: false, message: 'بيانات غير مكتملة' });
+  }
+
+  try {
+    const insertStmt = db.prepare(`
+      INSERT INTO errors (client_id, code, desc)
+      VALUES (?, ?, ?)
+    `);
+
+    const insertMany = db.transaction((errorList) => {
+      for (const err of errorList) {
+        if (err.code && err.desc) {
+          insertStmt.run(client_id, err.code, err.desc);
+        }
+      }
+    });
+
+    insertMany(errors);
+
+    res.json({ success: true, message: 'تمت إضافة الأعطال بنجاح' });
+  } catch (err) {
+    console.error("❌ خطأ أثناء إضافة الأعطال:", err.message);
+    res.status(500).json({ success: false, message: 'فشل في إضافة الأعطال' });
+  }
+});
+
+// ✅ عرض الأعطال المرتبطة بزبون محدد
+app.get('/api/errors/:client_id', (req, res) => {
+  const clientId = req.params.client_id;
+
+  try {
+    const stmt = db.prepare(`
+      SELECT code, desc, timestamp
+      FROM errors
+      WHERE client_id = ?
+      ORDER BY timestamp DESC
+    `);
+    const errors = stmt.all(clientId);
+    res.json({ success: true, errors });
+  } catch (err) {
+    console.error("❌ خطأ أثناء جلب الأعطال:", err.message);
+    res.status(500).json({ success: false, message: 'فشل في جلب الأعطال' });
   }
 });
 
