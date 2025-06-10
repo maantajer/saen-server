@@ -19,7 +19,6 @@
       font-weight: bold;
       color: #333;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      
     }
     .container {
       padding: 20px;
@@ -57,12 +56,16 @@
     .add-btn:hover {
       background-color: #555;
     }
+    .error-box {
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <header>
-    لوحة التحكم - العملاء المسجلين
-  </header>
+  <header>لوحة التحكم - العملاء المسجلين</header>
   <div class="container">
     <table id="clients-table">
       <thead>
@@ -71,28 +74,25 @@
           <th>نوع السيارة</th>
           <th>رقم اللوحة</th>
           <th>رقم الهاتف</th>
+          <th>تفاصيل</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- العملاء يتم تحميلهم من السيرفر -->
-      </tbody>
+      <tbody></tbody>
     </table>
     <a href="client_add.html" class="add-btn">إضافة عميل جديد</a>
+
+    <div id="error-box" class="error-box" style="display:none;">
+      <h3>تفاصيل الأعطال:</h3>
+      <ul id="error-list"></ul>
+    </div>
   </div>
 
   <script>
     async function fetchClients() {
       try {
-        const response = await fetch('https://saen-server-1.onrender.com/api/clients', {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-
+        const response = await fetch('https://saen-server-1.onrender.com/api/clients');
         const result = await response.json();
         const clients = Array.isArray(result.clients) ? result.clients : [];
-        console.log("عدد الزباين:", clients.length);
 
         const tbody = document.querySelector('#clients-table tbody');
         tbody.innerHTML = '';
@@ -104,11 +104,41 @@
             <td>${client.car_type}</td>
             <td>${client.plate_number}</td>
             <td>${client.phone}</td>
+            <td><button onclick="showDetails(${client.id})">تفاصيل</button></td>
           `;
           tbody.appendChild(row);
         });
       } catch (err) {
         alert('حدث خطأ أثناء تحميل البيانات');
+        console.error(err);
+      }
+    }
+
+    async function showDetails(clientId) {
+      try {
+        const response = await fetch(`https://saen-server-1.onrender.com/api/errors/${clientId}`);
+        const result = await response.json();
+
+        const list = document.getElementById('error-list');
+        const box = document.getElementById('error-box');
+        list.innerHTML = '';
+
+        if (result.errors && result.errors.length > 0) {
+          result.errors.forEach(err => {
+            const li = document.createElement('li');
+            li.textContent = `${err.code} - ${err.desc} (${err.timestamp})`;
+            list.appendChild(li);
+          });
+        } else {
+          const li = document.createElement('li');
+          li.textContent = 'لا توجد أعطال لهذا العميل.';
+          list.appendChild(li);
+          
+        }
+
+        box.style.display = 'block';
+      } catch (err) {
+        alert('فشل في جلب الأعطال');
         console.error(err);
       }
     }
