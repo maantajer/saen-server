@@ -4,6 +4,7 @@ const Database = require('better-sqlite3');
 const db = new Database('./clients.db');
 
 try {
+  // إنشاء جدول العملاء
   db.prepare(`
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,8 +18,22 @@ try {
   `).run();
 
   console.log("✅ تم إنشاء جدول clients (أو موجود سابقًا)");
+
+  // إنشاء جدول الأعطال
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS errors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER,
+      code TEXT,
+      desc TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `).run();
+
+  console.log("✅ تم إنشاء جدول errors (أو موجود سابقًا)");
+
 } catch (err) {
-  console.error("❌ خطأ أثناء إنشاء الجدول:", err.message);
+  console.error("❌ خطأ أثناء إنشاء الجداول:", err.message);
 }
 
 module.exports = db;
