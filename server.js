@@ -9,7 +9,7 @@ const port = 4000;
 app.use(cors());
 app.use(express.json());
 
-// ⭐️ هذا السطر يخلي السيرفر يعرض صفحات HTML من مجلد public
+//⭐️ هذا السطر يخلي السيرفر يعرض صفحات HTML من مجلد public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // تسجيل الدخول
@@ -17,6 +17,16 @@ app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
   try {
+    // ✅ تحقق من المشرف
+    if (username === 'maan' && password === '1234') {
+      return res.json({
+        success: true,
+        message: 'تسجيل دخول المشرف ناجح',
+        isAdmin: true
+      });
+    }
+
+    // 🔍 تحقق من الزبائن
     const stmt = db.prepare('SELECT * FROM clients WHERE username = ? AND password = ?');
     const client = stmt.get(username, password);
 
