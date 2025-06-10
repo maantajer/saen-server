@@ -14,17 +14,54 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // تسجيل الدخول
 app.post('/api/login', (req, res) => {
-  // ... كود تسجيل الدخول كما هو
+  const { username, password } = req.body;
+
+  try {
+    const stmt = db.prepare('SELECT * FROM clients WHERE username = ? AND password = ?');
+    const client = stmt.get(username, password);
+
+    if (client) {
+      res.json({ success: true, message: 'تسجيل دخول ناجح', client });
+    } else {
+      res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'حدث خطأ بالسيرفر' });
+  }
 });
 
 // إضافة عميل
 app.post('/api/add-client', (req, res) => {
-  // ... كود إضافة العميل كما هو
+  const { name, username, password, car_type, plate_number, phone } = req.body;
+
+  if (!username || !password || !name) {
+    return res.status(400).json({ success: false, message: 'يجب تعبئة كل الحقول المطلوبة' });
+  }
+
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO clients (name, username, password, car_type, plate_number, phone)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    const result = stmt.run(name, username, password, car_type, plate_number, phone);
+    res.json({ success: true, message: 'تم إضافة العميل بنجاح', clientId: result.lastInsertRowid });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'فشل في إضافة العميل' });
+  }
 });
 
-// عرض الزبائن
+// عرض كل الزبائن
 app.get('/api/clients', (req, res) => {
-  // ... كود عرض الزبائن كما هو
+  try {
+    const stmt = db.prepare('SELECT * FROM clients');
+    const clients = stmt.all();
+    res.json({ success: true, clients });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'فشل في جلب الزبائن' });
+  }
 });
 
 // الصفحة الرئيسية (احتياطي)
