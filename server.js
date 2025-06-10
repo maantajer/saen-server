@@ -12,8 +12,8 @@ app.use(express.json());
 //⭐️ يعرض صفحات HTML من مجلد public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ✅ إعداد Supabase
-const supabaseUrl = 'https://opehxnqpqgpshgyrlatf.supabase.co';
+// ✅ إعداد Supabase (بعد التصحيح)
+const supabaseUrl = 'https://opehxnqpqgpshgvrlatf.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZWh4bnFwcWdwc2hndnJsYXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1ODQ5ODMsImV4cCI6MjA2NTE2MDk4M30.Y0rIFWEQdXHA-aDxKBct55yOqqKvKBsgqNT25MbZYug';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
