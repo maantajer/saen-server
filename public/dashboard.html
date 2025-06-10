@@ -100,11 +100,11 @@
         clients.forEach(client => {
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${client.name}</td>
-            <td>${client.car_type}</td>
-            <td>${client.plate_number}</td>
-            <td>${client.phone}</td>
-            <td><button onclick="showDetails(${client.id})">تفاصيل</button></td>
+            <td>${client.name || '-'}</td>
+            <td>${client.car_type || '-'}</td>
+            <td>${client.plate_number || '-'}</td>
+            <td>${client.phone || '-'}</td>
+            <td><button onclick="showDetails('${client.id}')">تفاصيل</button></td>
           `;
           tbody.appendChild(row);
         });
@@ -133,7 +133,6 @@
           const li = document.createElement('li');
           li.textContent = 'لا توجد أعطال لهذا العميل.';
           list.appendChild(li);
-          
         }
 
         box.style.display = 'block';
