@@ -69,8 +69,9 @@ app.post('/api/add-client', async (req, res) => {
         phone,
         car_type,
         plate_number,
-        created_at: new Date().toISOString() // 🟢 ضروري بسبب not null
-      }]);
+        created_at: new Date().toISOString()
+      }])
+      .select(); // ✅ ترجع البيانات بعد الإدخال
 
     if (error) {
       console.error('❌ فشل في الإضافة:', error);
@@ -89,7 +90,7 @@ app.post('/api/add-client', async (req, res) => {
     res.json({
       success: true,
       message: 'تم إضافة العميل بنجاح',
-      clientId: data[0].id
+      clientId: data && data[0] ? data[0].id : null
     });
   } catch (err) {
     console.error('❌ خطأ بالسيرفر:', err);
