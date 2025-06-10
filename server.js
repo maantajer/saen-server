@@ -1,21 +1,21 @@
+require('dotenv').config(); // تحميل المتغيرات من .env
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 
+// إعداد Supabase من ملف env
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// إعدادات Express
 app.use(cors());
 app.use(express.json());
-
-//⭐️ يعرض صفحات HTML من مجلد public
 app.use(express.static(path.join(__dirname, 'public')));
-
-// ✅ إعداد Supabase (بعد التصحيح)
-const supabaseUrl = 'https://opehxnqpqgpshgvrlatf.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZWh4bnFwcWdwc2hndnJsYXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1ODQ5ODMsImV4cCI6MjA2NTE2MDk4M30.Y0rIFWEQdXHA-aDxKBct55yOqqKvKBsgqNT25MbZYug';
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ✅ تسجيل الدخول
 app.post('/api/login', async (req, res) => {
@@ -23,11 +23,7 @@ app.post('/api/login', async (req, res) => {
 
   try {
     if (username === 'maan' && password === '1234') {
-      return res.json({
-        success: true,
-        message: 'تسجيل دخول المشرف ناجح',
-        isAdmin: true
-      });
+      return res.json({ success: true, message: 'تسجيل دخول المشرف ناجح', isAdmin: true });
     }
 
     const { data, error } = await supabase
@@ -48,7 +44,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ✅ إضافة عميل (مع select() لحل مشكلة البيانات الراجعة)
+// ✅ إضافة عميل
 app.post('/api/add-client', async (req, res) => {
   const { name, username, password, phone, car_type = '', plate_number = '' } = req.body;
 
@@ -59,23 +55,22 @@ app.post('/api/add-client', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('clients')
-      .insert([{ name, username, password, phone, car_type, plate_number }])
-      .select(); // ✅ هاي الإضافة المهمة
+      .insert([{
+        name,
+        username,
+        password,
+        phone,
+        car_type,
+        plate_number,
+        created_at: new Date().toISOString(), // 🟢 ضروري بسبب not null
+      }]);
 
     if (error) {
       console.error('❌ فشل في الإضافة:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'فشل في إضافة العميل',
-        error
-      });
+      return res.status(500).json({ success: false, message: 'فشل في إضافة العميل', error });
     }
 
-    res.json({
-      success: true,
-      message: 'تم إضافة العميل بنجاح',
-      clientId: data?.[0]?.id || null // ✅ حماية من null
-    });
+    res.json({ success: true, message: 'تم إضافة العميل بنجاح', clientId: data[0].id });
   } catch (err) {
     console.error('❌ خطأ بالسيرفر:', err);
     res.status(500).json({ success: false, message: 'خطأ بالسيرفر', error: err });
