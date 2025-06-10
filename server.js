@@ -1,7 +1,7 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const db = require('./db');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const port = 4000;
@@ -9,15 +9,19 @@ const port = 4000;
 app.use(cors());
 app.use(express.json());
 
-//⭐️ هذا السطر يخلي السيرفر يعرض صفحات HTML من مجلد public
+//⭐️ يعرض صفحات HTML من مجلد public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// تسجيل الدخول
-app.post('/api/login', (req, res) => {
+// ✅ إعداد Supabase
+const supabaseUrl = 'https://opehxnqpqgpshgyrlatf.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9wZWh4bnFwcWdwc2hndnJsYXRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1ODQ5ODMsImV4cCI6MjA2NTE2MDk4M30.Y0rIFWEQdXHA-aDxKBct55yOqqKvKBsgqNT25MbZYug';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// ✅ تسجيل الدخول
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    // ✅ تحقق من المشرف
     if (username === 'maan' && password === '1234') {
       return res.json({
         success: true,
@@ -26,105 +30,67 @@ app.post('/api/login', (req, res) => {
       });
     }
 
-    // 🔍 تحقق من الزبائن
-    const stmt = db.prepare('SELECT * FROM clients WHERE username = ? AND password = ?');
-    const client = stmt.get(username, password);
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('username', username)
+      .eq('password', password)
+      .single();
 
-    if (client) {
-      res.json({ success: true, message: 'تسجيل دخول ناجح', client });
-    } else {
-      res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
+    if (error || !data) {
+      return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
+
+    res.json({ success: true, message: 'تسجيل دخول ناجح', client: data });
   } catch (err) {
-    console.error(err.message);
+    console.error('❌ خطأ تسجيل الدخول:', err.message);
     res.status(500).json({ success: false, message: 'حدث خطأ بالسيرفر' });
   }
 });
 
-// إضافة عميل
-app.post('/api/add-client', (req, res) => {
-  const { name, username, password, car_type, plate_number, phone } = req.body;
+// ✅ إضافة عميل
+app.post('/api/add-client', async (req, res) => {
+  const { name, username, password, phone, car_type = '', plate_number = '' } = req.body;
 
   if (!username || !password || !name) {
     return res.status(400).json({ success: false, message: 'يجب تعبئة كل الحقول المطلوبة' });
   }
 
   try {
-    const stmt = db.prepare(`
-      INSERT INTO clients (name, username, password, car_type, plate_number, phone)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-    const result = stmt.run(name, username, password, car_type, plate_number, phone);
-    res.json({ success: true, message: 'تم إضافة العميل بنجاح', clientId: result.lastInsertRowid });
+    const { data, error } = await supabase
+      .from('clients')
+      .insert([{ name, username, password, phone }]);
+
+    if (error) {
+      console.error('❌ فشل في الإضافة:', error.message);
+      return res.status(500).json({ success: false, message: 'فشل في إضافة العميل' });
+    }
+
+    res.json({ success: true, message: 'تم إضافة العميل بنجاح', clientId: data[0].id });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ success: false, message: 'فشل في إضافة العميل' });
+    console.error('❌ خطأ:', err.message);
+    res.status(500).json({ success: false, message: 'خطأ بالسيرفر' });
   }
 });
 
-// عرض كل الزبائن
-app.get('/api/clients', (req, res) => {
+// ✅ عرض كل الزبائن
+app.get('/api/clients', async (req, res) => {
   try {
-    const stmt = db.prepare('SELECT * FROM clients');
-    const clients = stmt.all();
-    res.json({ success: true, clients });
+    const { data, error } = await supabase.from('clients').select('*');
+
+    if (error) {
+      console.error('❌ فشل في جلب الزبائن:', error.message);
+      return res.status(500).json({ success: false, message: 'فشل في جلب الزبائن' });
+    }
+
+    res.json({ success: true, clients: data });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ success: false, message: 'فشل في جلب الزبائن' });
+    console.error('❌ خطأ:', err.message);
+    res.status(500).json({ success: false, message: 'خطأ بالسيرفر' });
   }
 });
 
-// ✅ إضافة الأعطال من تطبيق الأندرويد
-app.post('/api/add-error', (req, res) => {
-  const { client_id, errors } = req.body;
-
-  if (!client_id || !Array.isArray(errors)) {
-    return res.status(400).json({ success: false, message: 'بيانات غير مكتملة' });
-  }
-
-  try {
-    const insertStmt = db.prepare(`
-      INSERT INTO errors (client_id, code, desc)
-      VALUES (?, ?, ?)
-    `);
-
-    const insertMany = db.transaction((errorList) => {
-      for (const err of errorList) {
-        if (err.code && err.desc) {
-          insertStmt.run(client_id, err.code, err.desc);
-        }
-      }
-    });
-
-    insertMany(errors);
-
-    res.json({ success: true, message: 'تمت إضافة الأعطال بنجاح' });
-  } catch (err) {
-    console.error("❌ خطأ أثناء إضافة الأعطال:", err.message);
-    res.status(500).json({ success: false, message: 'فشل في إضافة الأعطال' });
-  }
-});
-
-// ✅ عرض الأعطال المرتبطة بزبون محدد
-app.get('/api/errors/:client_id', (req, res) => {
-  const clientId = req.params.client_id;
-
-  try {
-    const stmt = db.prepare(`
-      SELECT code, desc, timestamp
-      FROM errors
-      WHERE client_id = ?
-      ORDER BY timestamp DESC
-    `);
-    const errors = stmt.all(clientId);
-    res.json({ success: true, errors });
-  } catch (err) {
-    console.error("❌ خطأ أثناء جلب الأعطال:", err.message);
-    res.status(500).json({ success: false, message: 'فشل في جلب الأعطال' });
-  }
-});
-
-// الصفحة الرئيسية (احتياطي)
+// ✅ الصفحة الرئيسية
 app.get('/', (req, res) => {
   res.send('🚀 السيرفر شغال بنجاح، لا يوجد index.html حالياً');
 });
