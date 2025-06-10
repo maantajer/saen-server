@@ -59,6 +59,14 @@
       color: #333;
       font-weight: bold;
     }
+
+    .back-button {
+      margin-top: 10px;
+      display: inline-block;
+      text-decoration: none;
+      color: orange;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -74,6 +82,7 @@
       <button type="submit">إضافة</button>
     </form>
     <p id="message"></p>
+    <a class="back-button" href="dashboard.html">⬅️ الرجوع إلى القائمة</a>
   </div>
 
   <script>
@@ -98,7 +107,11 @@
         if (result.success) {
           message.textContent = '✅ تم إضافة العميل بنجاح!';
           message.style.color = 'green';
-          form.reset();
+
+          // ✅ رجوع تلقائي بعد ثانيتين
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 2000);
         } else {
           message.textContent = '❌ فشل في الإضافة: ' + result.message;
           message.style.color = 'red';
