@@ -13,20 +13,19 @@ app.use(express.json());
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
-  db.get(
-    'SELECT * FROM clients WHERE username = ? AND password = ?',
-    [username, password],
-    (err, row) => {
-      if (err) {
-        console.error(err.message);
-        res.status(500).json({ success: false, message: 'حدث خطأ بالسيرفر' });
-      } else if (row) {
-        res.json({ success: true, message: 'تسجيل دخول ناجح', client: row });
-      } else {
-        res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
-      }
+  try {
+    const stmt = db.prepare('SELECT * FROM clients WHERE username = ? AND password = ?');
+    const client = stmt.get(username, password);
+
+    if (client) {
+      res.json({ success: true, message: 'تسجيل دخول ناجح', client });
+    } else {
+      res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
-  );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'حدث خطأ بالسيرفر' });
+  }
 });
 
 // إضافة عميل
@@ -37,33 +36,29 @@ app.post('/api/add-client', (req, res) => {
     return res.status(400).json({ success: false, message: 'يجب تعبئة كل الحقول المطلوبة' });
   }
 
-  const stmt = db.prepare(`
-    INSERT INTO clients (name, username, password, car_type, plate_number, phone)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `);
-
-  stmt.run(name, username, password, car_type, plate_number, phone, function (err) {
-    if (err) {
-      console.error(err.message);
-      res.status(500).json({ success: false, message: 'فشل في إضافة العميل' });
-    } else {
-      res.json({ success: true, message: 'تم إضافة العميل بنجاح', clientId: this.lastID });
-    }
-  });
-
-  stmt.finalize();
+  try {
+    const stmt = db.prepare(`
+      INSERT INTO clients (name, username, password, car_type, plate_number, phone)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    const result = stmt.run(name, username, password, car_type, plate_number, phone);
+    res.json({ success: true, message: 'تم إضافة العميل بنجاح', clientId: result.lastInsertRowid });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'فشل في إضافة العميل' });
+  }
 });
 
 // عرض كل الزبائن
 app.get('/api/clients', (req, res) => {
-  db.all('SELECT * FROM clients', [], (err, rows) => {
-    if (err) {
-      console.error(err.message);
-      res.status(500).json({ success: false, message: 'فشل في جلب الزبائن' });
-    } else {
-      res.json({ success: true, clients: rows });
-    }
-  });
+  try {
+    const stmt = db.prepare('SELECT * FROM clients');
+    const clients = stmt.all();
+    res.json({ success: true, clients });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: 'فشل في جلب الزبائن' });
+  }
 });
 
 // الصفحة الرئيسية

@@ -1,13 +1,10 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./clients.db', (err) => {
-  if (err) {
-    return console.error("❌ فشل الاتصال بقاعدة البيانات:", err.message);
-  }
-  console.log("✅ تم الاتصال بقاعدة البيانات بنجاح");
-});
+const Database = require('better-sqlite3');
 
-db.serialize(() => {
-  db.run(`
+// إنشاء الاتصال بقاعدة البيانات (بيتم إنشاؤها إذا مو موجودة)
+const db = new Database('./clients.db');
+
+try {
+  db.prepare(`
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
@@ -17,12 +14,11 @@ db.serialize(() => {
       plate_number TEXT,
       phone TEXT
     )
-  `, (err) => {
-    if (err) {
-      return console.error("❌ خطأ أثناء إنشاء الجدول:", err.message);
-    }
-    console.log("✅ تم إنشاء جدول clients (أو موجود سابقًا)");
-  });
-});
+  `).run();
+
+  console.log("✅ تم إنشاء جدول clients (أو موجود سابقًا)");
+} catch (err) {
+  console.error("❌ خطأ أثناء إنشاء الجدول:", err.message);
+}
 
 module.exports = db;
