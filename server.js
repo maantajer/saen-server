@@ -48,7 +48,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// ✅ إضافة عميل
+// ✅ إضافة عميل (مع select() لحل مشكلة البيانات الراجعة)
 app.post('/api/add-client', async (req, res) => {
   const { name, username, password, phone, car_type = '', plate_number = '' } = req.body;
 
@@ -59,7 +59,8 @@ app.post('/api/add-client', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('clients')
-      .insert([{ name, username, password, phone, car_type, plate_number }]);
+      .insert([{ name, username, password, phone, car_type, plate_number }])
+      .select(); // ✅ هاي الإضافة المهمة
 
     if (error) {
       console.error('❌ فشل في الإضافة:', error);
@@ -73,7 +74,7 @@ app.post('/api/add-client', async (req, res) => {
     res.json({
       success: true,
       message: 'تم إضافة العميل بنجاح',
-      clientId: data[0].id
+      clientId: data?.[0]?.id || null // ✅ حماية من null
     });
   } catch (err) {
     console.error('❌ خطأ بالسيرفر:', err);
