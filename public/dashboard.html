@@ -84,6 +84,7 @@
     <div id="error-box" class="error-box" style="display:none;">
       <h3>تفاصيل الأعطال:</h3>
       <ul id="error-list"></ul>
+      <button onclick="closeErrorBox()" style="margin-top: 15px; padding: 8px 16px; background: orange; border: none; color: white; border-radius: 8px; cursor: pointer;">إغلاق</button>
     </div>
   </div>
 
@@ -116,17 +117,18 @@
 
     async function showDetails(clientId) {
       try {
-        const response = await fetch(`https://saen-server-1.onrender.com/api/errors/${clientId}`);
+        const response = await fetch(`https://saen-server-1.onrender.com/api/get-errors/${clientId}`);
         const result = await response.json();
 
         const list = document.getElementById('error-list');
         const box = document.getElementById('error-box');
         list.innerHTML = '';
 
-        if (result.errors && result.errors.length > 0) {
+        if (result.success && result.errors && result.errors.length > 0) {
           result.errors.forEach(err => {
             const li = document.createElement('li');
-            li.textContent = `${err.code} - ${err.desc} (${err.timestamp})`;
+            const date = new Date(err.created_at).toLocaleString('ar-EG');
+            li.textContent = `${date} ➤ ${err.dtc_codes}`;
             list.appendChild(li);
           });
         } else {
@@ -140,6 +142,10 @@
         alert('فشل في جلب الأعطال');
         console.error(err);
       }
+    }
+
+    function closeErrorBox() {
+      document.getElementById('error-box').style.display = 'none';
     }
 
     fetchClients();
