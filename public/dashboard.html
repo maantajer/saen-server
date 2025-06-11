@@ -105,10 +105,19 @@
             <td>${client.car_type || '-'}</td>
             <td>${client.plate_number || '-'}</td>
             <td>${client.phone || '-'}</td>
-            <td><button onclick="showDetails('${client.id}')">تفاصيل</button></td>
+            <td><button class="details-btn" data-client-id="${client.id}">تفاصيل</button></td>
           `;
           tbody.appendChild(row);
         });
+
+        // ربط زر التفاصيل بعد إنشاء الجدول
+        document.querySelectorAll('.details-btn').forEach(button => {
+          button.addEventListener('click', async () => {
+            const clientId = button.getAttribute('data-client-id');
+            showDetails(clientId);
+          });
+        });
+
       } catch (err) {
         alert('حدث خطأ أثناء تحميل البيانات');
         console.error(err);
