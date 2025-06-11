@@ -124,7 +124,13 @@
         const box = document.getElementById('error-box');
         list.innerHTML = '';
 
-        if (result.success && result.errors && result.errors.length > 0) {
+        if (!result.success) {
+          list.innerHTML = '<li>فشل في جلب الأعطال من السيرفر.</li>';
+          box.style.display = 'block';
+          return;
+        }
+
+        if (result.errors && result.errors.length > 0) {
           result.errors.forEach(err => {
             const li = document.createElement('li');
             const date = new Date(err.created_at).toLocaleString('ar-EG');
