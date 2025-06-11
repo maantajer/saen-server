@@ -1,5 +1,4 @@
-
-require('dotenv').config(); // تحميل المتغيرات من .env
+require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -70,12 +69,7 @@ app.post('/api/add-client', async (req, res) => {
       return res.status(500).json({
         success: false,
         message: 'فشل في إضافة العميل',
-        error: {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        }
+        error
       });
     }
     res.json({
@@ -105,12 +99,7 @@ app.get('/api/clients', async (req, res) => {
       return res.status(500).json({
         success: false,
         message: 'فشل في جلب الزبائن',
-        error: {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        }
+        error
       });
     }
     res.json({ success: true, clients: data });
@@ -127,43 +116,10 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
-// ✅ حفظ أكواد الأعطال المرتبطة بالعميل
-app.post('/api/add-error', async (req, res) => {
-  console.log("🚀 البيانات الواصلة:", req.body); // ✅ هاد رح يطبع شو واصل فعليًا
-
-  const { client_id, dtc_codes } = req.body;
-
-  if (!client_id || !dtc_codes) {
-    return res.status(400).json({ success: false, message: 'client_id و dtc_codes مطلوبين' });
-  }
-
-});
-
-    }
-    res.json({ success: true, message: 'تم حفظ أكواد الأعطال بنجاح' });
-  } catch (err) {
-    console.error('❌ خطأ:', err);
-    res.status(500).json({
-      success: false,
-      message: 'حدث خطأ أثناء الحفظ',
-      error: {
-        message: err.message,
-        stack: err.stack
-      }
-    });
-  }
-});
-
-// ✅ الصفحة الرئيسية
-app.get('/', (req, res) => {
-  res.send('🚀 السيرفر شغال بنجاح، لا يوجد index.html حالياً');
-});
-
-app.listen(port, () => {
-  console.log(`🚀 السيرفر شغال على http://localhost:${port}`);
-});
 // ✅ استقبال رموز الأعطال وربطها بالزبون
 app.post('/api/add-error', async (req, res) => {
+  console.log("🚀 البيانات الواصلة:", req.body);
+
   const { client_id, dtc_codes } = req.body;
 
   if (!client_id || !dtc_codes) {
@@ -172,7 +128,7 @@ app.post('/api/add-error', async (req, res) => {
 
   try {
     const { data, error } = await supabase
-      .from('dtc_errors') // اسم الجدول الجديد تبع الأعطال
+      .from('dtc_errors')
       .insert([{
         client_id,
         dtc_codes,
@@ -200,4 +156,14 @@ app.post('/api/add-error', async (req, res) => {
       }
     });
   }
+});
+
+// ✅ الصفحة الرئيسية
+app.get('/', (req, res) => {
+  res.send('🚀 السيرفر شغال بنجاح، لا يوجد index.html حالياً');
+});
+
+// ✅ تشغيل السيرفر
+app.listen(port, () => {
+  console.log(`🚀 السيرفر شغال على http://localhost:${port}`);
 });
