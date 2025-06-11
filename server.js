@@ -137,7 +137,6 @@ app.post('/api/add-error', async (req, res) => {
     return res.status(400).json({ success: false, message: 'client_id و dtc_codes مطلوبين' });
   }
 
-  ...
 });
 
     }
