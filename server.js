@@ -1,3 +1,4 @@
+
 require('dotenv').config(); // تحميل المتغيرات من .env
 const path = require('path');
 const express = require('express');
@@ -7,12 +8,10 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const port = process.env.PORT || 4000;
 
-// إعداد Supabase من ملف env
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// إعدادات Express
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -20,23 +19,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ✅ تسجيل الدخول
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
-
   try {
     if (username === 'maan' && password === '1234') {
       return res.json({ success: true, message: 'تسجيل دخول المشرف ناجح', isAdmin: true });
     }
-
     const { data, error } = await supabase
       .from('clients')
       .select('*')
       .eq('username', username)
       .eq('password', password)
       .single();
-
     if (error || !data) {
       return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
-
     res.json({ success: true, message: 'تسجيل دخول ناجح', client: data });
   } catch (err) {
     console.error('❌ خطأ تسجيل الدخول:', err);
@@ -54,11 +49,9 @@ app.post('/api/login', async (req, res) => {
 // ✅ إضافة عميل
 app.post('/api/add-client', async (req, res) => {
   const { name, username, password, phone, car_type = '', plate_number = '' } = req.body;
-
   if (!username || !password || !name) {
     return res.status(400).json({ success: false, message: 'يجب تعبئة كل الحقول المطلوبة' });
   }
-
   try {
     const { data, error } = await supabase
       .from('clients')
@@ -71,8 +64,7 @@ app.post('/api/add-client', async (req, res) => {
         plate_number,
         created_at: new Date().toISOString()
       }])
-      .select(); // ✅ ترجع البيانات بعد الإدخال
-
+      .select();
     if (error) {
       console.error('❌ فشل في الإضافة:', error);
       return res.status(500).json({
@@ -86,7 +78,6 @@ app.post('/api/add-client', async (req, res) => {
         }
       });
     }
-
     res.json({
       success: true,
       message: 'تم إضافة العميل بنجاح',
@@ -109,7 +100,6 @@ app.post('/api/add-client', async (req, res) => {
 app.get('/api/clients', async (req, res) => {
   try {
     const { data, error } = await supabase.from('clients').select('*');
-
     if (error) {
       console.error('❌ فشل في جلب الزبائن:', error);
       return res.status(500).json({
@@ -123,13 +113,51 @@ app.get('/api/clients', async (req, res) => {
         }
       });
     }
-
     res.json({ success: true, clients: data });
   } catch (err) {
     console.error('❌ خطأ:', err);
     res.status(500).json({
       success: false,
       message: 'خطأ بالسيرفر',
+      error: {
+        message: err.message,
+        stack: err.stack
+      }
+    });
+  }
+});
+
+// ✅ حفظ أكواد الأعطال المرتبطة بالعميل
+app.post('/api/add-error', async (req, res) => {
+  const { client_id, dtc_codes } = req.body;
+  if (!client_id || !dtc_codes || !Array.isArray(dtc_codes)) {
+    return res.status(400).json({ success: false, message: 'بيانات غير مكتملة أو غير صحيحة' });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('errors')
+      .insert([{
+        client_id,
+        dtc_codes,
+        created_at: new Date().toISOString()
+      }]);
+    if (error) {
+      console.error('❌ فشل في إضافة الأعطال:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'فشل في حفظ الأعطال',
+        error: {
+          message: error.message,
+          details: error.details
+        }
+      });
+    }
+    res.json({ success: true, message: 'تم حفظ أكواد الأعطال بنجاح' });
+  } catch (err) {
+    console.error('❌ خطأ:', err);
+    res.status(500).json({
+      success: false,
+      message: 'حدث خطأ أثناء الحفظ',
       error: {
         message: err.message,
         stack: err.stack
