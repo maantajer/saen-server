@@ -129,28 +129,17 @@ app.get('/api/clients', async (req, res) => {
 
 // ✅ حفظ أكواد الأعطال المرتبطة بالعميل
 app.post('/api/add-error', async (req, res) => {
+  console.log("🚀 البيانات الواصلة:", req.body); // ✅ هاد رح يطبع شو واصل فعليًا
+
   const { client_id, dtc_codes } = req.body;
-  if (!client_id || !dtc_codes || !Array.isArray(dtc_codes)) {
-    return res.status(400).json({ success: false, message: 'بيانات غير مكتملة أو غير صحيحة' });
+
+  if (!client_id || !dtc_codes) {
+    return res.status(400).json({ success: false, message: 'client_id و dtc_codes مطلوبين' });
   }
-  try {
-    const { data, error } = await supabase
-      .from('errors')
-      .insert([{
-        client_id,
-        dtc_codes,
-        created_at: new Date().toISOString()
-      }]);
-    if (error) {
-      console.error('❌ فشل في إضافة الأعطال:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'فشل في حفظ الأعطال',
-        error: {
-          message: error.message,
-          details: error.details
-        }
-      });
+
+  ...
+});
+
     }
     res.json({ success: true, message: 'تم حفظ أكواد الأعطال بنجاح' });
   } catch (err) {
@@ -173,4 +162,43 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`🚀 السيرفر شغال على http://localhost:${port}`);
+});
+// ✅ استقبال رموز الأعطال وربطها بالزبون
+app.post('/api/add-error', async (req, res) => {
+  const { client_id, dtc_codes } = req.body;
+
+  if (!client_id || !dtc_codes) {
+    return res.status(400).json({ success: false, message: 'client_id و dtc_codes مطلوبين' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('dtc_errors') // اسم الجدول الجديد تبع الأعطال
+      .insert([{
+        client_id,
+        dtc_codes,
+        created_at: new Date().toISOString()
+      }]);
+
+    if (error) {
+      console.error('❌ خطأ في حفظ الأعطال:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'فشل في حفظ الأعطال',
+        error
+      });
+    }
+
+    res.json({ success: true, message: 'تم حفظ الأعطال بنجاح' });
+  } catch (err) {
+    console.error('❌ استثناء عند حفظ الأعطال:', err);
+    res.status(500).json({
+      success: false,
+      message: 'خطأ في السيرفر',
+      error: {
+        message: err.message,
+        stack: err.stack
+      }
+    });
+  }
 });
