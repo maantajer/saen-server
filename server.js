@@ -158,6 +158,33 @@ app.post('/api/add-error', async (req, res) => {
   }
 });
 
+// ✅ جلب الأعطال حسب client_id
+app.get('/api/get-errors/:client_id', async (req, res) => {
+  const clientId = req.params.client_id;
+
+  if (!clientId) {
+    return res.status(400).json({ success: false, message: 'يرجى إرسال client_id صالح' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('dtc_errors')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ فشل في جلب الأعطال:', error);
+      return res.status(500).json({ success: false, message: 'فشل في جلب الأعطال', error });
+    }
+
+    res.json({ success: true, errors: data });
+  } catch (err) {
+    console.error('❌ خطأ في السيرفر:', err);
+    res.status(500).json({ success: false, message: 'خطأ بالسيرفر', error: { message: err.message, stack: err.stack } });
+  }
+});
+
 // ✅ الصفحة الرئيسية
 app.get('/', (req, res) => {
   res.send('🚀 السيرفر شغال بنجاح، لا يوجد index.html حالياً');
