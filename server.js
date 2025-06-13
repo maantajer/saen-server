@@ -31,7 +31,14 @@ app.post('/api/login', async (req, res) => {
     if (error || !data) {
       return res.status(401).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
-    res.json({ success: true, message: 'تسجيل دخول ناجح', client: data });
+    res.json({
+  success: true,
+  message: 'تسجيل دخول ناجح',
+  result: {
+    client_id: data.id,
+    username: data.username
+  }
+});
   } catch (err) {
     console.error('❌ خطأ تسجيل الدخول:', err);
     res.status(500).json({
